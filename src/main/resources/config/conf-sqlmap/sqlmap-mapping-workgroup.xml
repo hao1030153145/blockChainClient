@@ -1,0 +1,200 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Fri Feb 20 23:34:39 CST 2015-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="workGroupMapper">
+    <!-- TODO: 在这里定义各种sql语句，用法请参考iBATIS文档 -->
+
+    <!-- 根据查询条件获得任务组信息 -->
+    <select id="getWorkGroupListByParam" resultType="com.smartdatachain.api.integration.bo.WorkGroupBO"
+            parameterType="java.util.Map">
+        SELECT id,
+        user_id,
+        name
+        FROM work_group_local
+        WHERE user_id = #{userId}
+        <if test="name != null and ''!= name">
+            and name like '%${name}%'
+        </if>
+    </select>
+
+    <!-- 根据查询条件获得任务组信息 -->
+    <select id="getWordGroupIdByName" resultType="java.lang.Integer"
+            parameterType="java.lang.String">
+        SELECT id
+        FROM work_group_local
+        WHERE
+        name = #{name}
+    </select>
+
+
+    <!-- 添加任务组信息 -->
+    <insert id="addWorkGroup" parameterType="java.util.Map">
+        INSERT INTO work_group_local (
+            `user_id`,
+            `name`
+        )
+        VALUES(
+            #{userId},
+            #{name}
+        )
+    </insert>
+
+    <!-- 根据id删除对应任务组 -->
+    <delete id="deleteWorkGroupById" parameterType="java.util.Map">
+        DELETE FROM work_group_local
+        WHERE id = #{collectionId}
+    </delete>
+
+    <!-- 根据id修改任务组信息 -->
+    <update id="updateWorkGroupById" parameterType="java.util.Map">
+        UPDATE work_group_local
+        SET name = #{name}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据条件id删除任务组下详细子任务 -->
+    <delete id="deleteWorkGroupDetailById" parameterType="java.util.Map">
+        DELETE FROM work_group_local_detail
+        where collection_id = #{collectionId}
+        <if test="appId != null and ''!= appId">
+            and app_id = #{appId}
+        </if>
+    </delete>
+
+    <!-- 根据查询条件获得任务组详细任务 -->
+    <select id="getWorkGroupDetailByParam" resultType="com.smartdatachain.api.integration.bo.WorkGroupDetailBO"
+            parameterType="java.util.Map">
+        SELECT app_id,
+        info,
+        name,
+        type,
+        status,
+        time_create,
+        graph,
+        type_sub,
+        count_local,
+        collection_id,
+        rule
+        FROM work_group_local_detail
+        where collection_id = #{collectionId}
+        <if test="name != null and ''!= name">
+            and name like '%${name}%'
+        </if>
+        <if test="null != timeCreate">
+            <![CDATA[ and time_create >= #{timeCreate,jdbcType=TIMESTAMP}  ]]>
+        </if>
+        <if test="null != endTime">
+            <![CDATA[ and time_create <= #{endTime,jdbcType=TIMESTAMP}  ]]>
+        </if>
+        ORDER BY time_create DESC
+        limit #{page},#{size}
+    </select>
+
+    <!-- 根据appId获得任务组详细任务 -->
+    <select id="getWorkGroupDetailById" resultType="com.smartdatachain.api.integration.bo.WorkGroupDetailBO"
+            parameterType="java.lang.Integer">
+        SELECT app_id,
+        info,
+        name,
+        type,
+        status,
+        time_create,
+        graph,
+        type_sub,
+        count_local,
+        collection_id,
+        rule
+        FROM work_group_local_detail
+        where app_id = #{appId}
+    </select>
+
+    <!-- 根据查询条件获得 任务组详细任务的数量 -->
+    <select id="getWorkGroupDetailCountByParam" resultType="java.lang.Integer"
+            parameterType="java.util.Map">
+        SELECT count(app_id)
+        FROM work_group_local_detail
+        where collection_id = #{collectionId}
+        <if test="name != null and ''!= name">
+            and name like '%${name}%'
+        </if>
+        <if test="null != timeCreate">
+            <![CDATA[ and time_create >= #{timeCreate,jdbcType=TIMESTAMP}  ]]>
+        </if>
+        <if test="null != endTime">
+            <![CDATA[ and time_create <= #{endTime,jdbcType=TIMESTAMP}  ]]>
+        </if>
+    </select>
+
+    <!-- 根据id修改任务组下详细任务名称和分组 -->
+    <update id="updateWorkGroupDetailById" parameterType="com.smartdatachain.api.web.filter.WorkGroupDetailFilter">
+        UPDATE work_group_local_detail
+        <set>
+            <if test="info !=null and '' != info">
+                info = #{info},
+            </if>
+            <if test="name !=null and '' != name">
+                name = #{name},
+            </if>
+            <if test="type !=null and '' != type">
+                type = #{type},
+            </if>
+            <if test="status !=null and '' != status">
+                status = #{status},
+            </if>
+            <if test="graph !=null and '' != graph">
+                graph = #{graph},
+            </if>
+            <if test="typeSub !=null and '' != typeSub">
+                type_sub = #{typeSub},
+            </if>
+            <if test="countLocal != null and -1 != countLocal">
+                count_local = #{countLocal},
+            </if>
+            <if test="collectionId !=null and '' != collectionId">
+                collection_id = #{collectionId},
+            </if>
+            <if test="rule !=null and '' != rule">
+                rule = #{rule},
+            </if>
+            time_create = now(),
+            app_id = #{appId}
+        </set>
+        WHERE app_id = #{appId}
+    </update>
+
+    <!-- 保存子任务组信息 -->
+    <insert id="saveWorkGroupDetail" parameterType="com.smartdatachain.api.web.filter.WorkGroupDetailFilter">
+        <selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="appId">
+            SELECT LAST_INSERT_ID()
+        </selectKey>
+        INSERT INTO work_group_local_detail (
+        `info`,
+        `name`,
+        `type`,
+        `status`,
+        `time_create`,
+        `graph`,
+        `type_sub`,
+        `count_local`,
+        `collection_id`,
+        `rule`
+        )
+        VALUES(
+        #{info},
+        #{name},
+        #{type},
+        #{status},
+        now(),
+        #{graph},
+        #{typeSub},
+        <choose>
+            <when test="countLocal == null">0</when>
+            <when test="countLocal != null">#{countLocal}</when>
+        </choose>
+        ,
+        #{collectionId},
+        #{rule}
+        )
+    </insert>
+
+</mapper>

@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Fri Feb 20 23:34:39 CST 2015-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cloudDiskMapper">
+
+    <insert id="addCloudDisk"
+            parameterType="com.smartdatachain.api.integration.bo.CloudDiskBO"
+            useGeneratedKeys="true" keyProperty="cloudId">
+        INSERT  INTO cloud_disk_list ( disk_name, wallet_id, capacity, useful_length,used_cap, start_time, end_time)
+        VALUES (#{diskName},#{walletID},#{capacity},#{usefulLength},0,#{startTime},#{endTime})
+    </insert>
+
+    <select id="getCloudDisks"
+            parameterType="java.util.Map"
+            resultType="com.smartdatachain.api.integration.bo.CloudDiskBO">
+      SELECT
+      cloud_id, disk_name, wallet_id, capacity, useful_length,used_cap, start_time, end_time
+      from cloud_disk_list
+      where
+            end_time > now()
+            <if test="walletId != null">
+               AND wallet_id =#{walletId}
+            </if>
+            <if test="cloudId != null">
+                AND cloud_id =#{cloudId}
+            </if>
+      ORDER BY start_time DESC
+    </select>
+
+
+    <update id="updateCloudDisk"
+            parameterType="java.util.Map">
+        UPDATE cloud_disk_list
+        SET
+          <if test="capacity != null">
+            capacity = #{capacity},
+          </if>
+          <if test="usefulLength != null">
+              useful_length = #{usefulLength},
+          </if>
+          <if test="endTime != null">
+              end_time = #{endTime},
+          </if>
+        <if test="usedCap != null">
+            used_cap = #{usedCap},
+        </if>
+          last_modify_time = now()
+        WHERE
+         cloud_id = #{id}
+    </update>
+
+    <insert id="addCloadDatabase"
+            parameterType="com.smartdatachain.api.integration.bo.CloudDataBaseBO"
+            useGeneratedKeys="true"
+            keyProperty="">
+        INSERT INTO cloud_database_list (name, wallet_id, capacity, useful_length,used_cap, database_pwd,start_time, end_time)
+        VALUES
+         (#{name},#{walletID},#{capacity},#{usefulLength},0,#{databasePwd},#{startTime},#{endTime})
+    </insert>
+
+    <select id="getCloudDatabases"
+            parameterType="java.util.Map"
+            resultType="com.smartdatachain.api.integration.bo.CloudDataBaseBO">
+        SELECT database_id,name, wallet_id, capacity, useful_length, start_time, end_time,used_cap,database_pwd
+        from cloud_database_list as a
+        where
+            end_time > NOW()
+            <if test="walletId != null">
+                AND a.wallet_id =#{walletId}
+            </if>
+            <if test="databaseId != null">
+                AND a.database_id = #{databaseId}
+            </if>
+    </select>
+
+
+    <update id="updateCloudDatabase"
+            parameterType="java.util.Map">
+        UPDATE cloud_database_list
+        SET
+        <if test="capacity != null">
+            capacity = #{capacity},
+        </if>
+        <if test="usefulLength != null">
+            useful_length = #{usefulLength},
+        </if>
+        <if test="endTime != null">
+            end_time = #{endTime},
+        </if>
+        <if test="databasePwd != null">
+            database_pwd = #{databasePwd},
+        </if>
+        <if test="usedCap != null">
+            used_cap =#{usedCap},
+        </if>
+        last_modify_time = now()
+        WHERE
+        database_id = #{id}
+    </update>
+
+    <delete id="deleteDiskByTime">
+        DELETE c1.*, c2.*  from cloud_disk_list c1 LEFT  JOIN cloud_file_info c2
+        on c1.cloud_id = c2.cloudId
+        where  now() > c1.end_time
+    </delete>
+
+    <delete id="deleteDBByTime">
+        DELETE c1.*,c2.*,c3.* from (cloud_database_list c1 LEFT JOIN crawl_data c2 on c1.database_id = c2.database_id) LEFT JOIN crawl_data_news c3
+        on c1.database_id = c3.database_id
+        WHERE  now() > c1.end_time
+    </delete>
+
+</mapper>

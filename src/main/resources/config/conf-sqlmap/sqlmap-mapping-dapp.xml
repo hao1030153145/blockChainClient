@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Fri Feb 20 23:34:39 CST 2015-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="dappMapper">
+    <!-- TODO: 在这里定义各种sql语句，用法请参考iBATIS文档 -->
+
+    <!-- 创建dapp -->
+    <insert id="createDapp" parameterType="java.util.Map">
+       INSERT INTO dapp (
+            dapp_name,
+            dapp_intro,
+            mac_address,
+            token
+        )
+        VALUES(
+            #{dappName},
+            #{dappIntro},
+            #{macAddress},
+            #{token}
+        )
+    </insert>
+
+    <!-- 获得dapp列表 -->
+    <select id="getDappByMacAddress" resultType="com.smartdatachain.api.integration.bo.DappBO"
+            parameterType="java.util.Map">
+        SELECT id,
+        dapp_name,
+        dapp_intro,
+        mac_address
+        FROM dapp
+        where mac_address = #{macAddress}
+    </select>
+
+    <!-- 根据数据库名字获取数据库id -->
+    <select id="getDataBaseIdByName" parameterType="java.lang.String"
+            resultType="java.lang.Integer">
+        SELECT database_id
+        FROM cloud_database_list
+        where name = #{dataBaseName}
+    </select>
+
+    <!-- 根据条件获得dapp的数据数目 -->
+    <select id="getDataToDappCountByParam" resultType="java.lang.Integer"
+            parameterType="java.util.Map">
+        SELECT count(id)
+        FROM ${dataBaseTableName}
+        where type = #{type} and database_id = #{dataBaseId}
+    </select>
+
+    <!-- 根据条件获得dapp的数据 -->
+    <select id="getDataToDappByParam" resultType="com.smartdatachain.api.web.po.DappDataPO"
+            parameterType="java.util.Map">
+        SELECT id,
+        database_id,
+        type,
+        title,
+        content,
+        img,
+        source,
+        url,
+        author,
+        publish_time,
+        create_time,
+        last_modify_time as modifyTime
+        FROM ${dataBaseTableName}
+        where type = #{type} and database_id = #{dataBaseId}
+        limit #{page},#{size}
+    </select>
+
+
+
+
+    <!-- 根据dappId获取dapp和中间表的数据库id -->
+    <select id="getDataBaseDetailByDappId" resultType="com.smartdatachain.api.integration.bo.DataBaseDetailBO"
+            parameterType="java.lang.Integer">
+            SELECT
+                d1.id as id,
+                d1.dapp_name as dappName,
+                d1.dapp_intro as dappIntro,
+                d1.mac_address as macAddress,
+                d1.token as token,
+                d2.database_id as dataBaseId
+            FROM
+                dapp d1
+            LEFT JOIN dapp_database d2 ON d1.id = d2.dapp_id
+            WHERE
+                d1.id = #{dappId}
+    </select>
+
+    <!-- 根据dappId和中间表的数据库id获取数据库信息 -->
+    <select id="getDataBaseDetailByDappIdAndDBId" resultType="com.smartdatachain.api.integration.bo.DataBaseDetailsBO"
+            parameterType="java.util.Map">
+            SELECT
+                c.database_id as id,
+                c.`name` as dataBaseName,
+                c.wallet_id as walletId,
+                c.database_pwd as dataBasePassword,
+                d2.database_table_name as dataBaseTableName
+            FROM
+                dapp_database d2
+            LEFT JOIN cloud_database_list c ON c.database_id = d2.database_id
+            WHERE
+                d2.database_id = #{dataBaseId} and d2.dapp_id = #{dappId}
+    </select>
+
+    <!-- 根据各种条件获得dappId -->
+    <select id="getDataBaseIdByParam" resultType="java.lang.Integer"
+            parameterType="java.util.Map">
+        SELECT c.database_id as dataBaseId
+        FROM cloud_database_list c
+        WHERE
+        c.wallet_id = #{walletAddress}
+        and c.name = #{dataBaseName}
+        and c.database_pwd = #{dataBaseToken}
+    </select>
+
+    <!-- dapp与数据库关联 -->
+    <insert id="dappRelevantDB" parameterType="java.util.Map">
+        insert into dapp_database(
+          dapp_id,
+          database_id,
+          database_table_name
+        )
+        value (
+          #{dappId},
+          #{dataBaseId},
+          #{dataBaseTableName}
+        )
+    </insert>
+
+    <!-- 根据数据库表id修改关联表的状态 -->
+    <update id="updateRelevantDBStatus" parameterType="java.util.Map">
+        update database_table
+        set relevant_dapp_id = #{dappId}
+        where id = #{dataBaseTableId};
+    </update>
+
+    <!-- 根据dappId删除中间表的关联关系数据 -->
+    <delete id="deleteDappRelevantByParam" parameterType="java.util.Map">
+        delete from dapp_database
+        where dapp_id = #{dappId}
+        <if test="dataBaseId != null and ''!= dataBaseId">
+            and database_id = #{dataBaseId}
+        </if>
+    </delete>
+
+    <!-- 根据钱包地址，获得钱包地址下的数据库及数据库表 -->
+    <select id="getDataBaseListByWalletAddress" resultType="com.smartdatachain.api.web.po.DataBasePO"
+            parameterType="java.util.Map">
+            SELECT
+                c.database_id as id,
+                c.wallet_id as walletAddress,
+                c.NAME as dataBaseName
+            FROM
+                cloud_database_list c
+            WHERE
+                c.wallet_id  = #{walletAddress}
+    </select>
+
+    <!-- 根据dappId删除dapp -->
+    <delete id="deleteDappById" parameterType="java.lang.Integer">
+        delete from dapp
+        where id = #{dappId}
+    </delete>
+
+</mapper>

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Fri Feb 20 23:34:39 CST 2015-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="walletMapper">
+    <!-- TODO: 在这里定义各种sql语句，用法请参考iBATIS文档 -->
+
+    <!-- 根据名字和密码查询钱包信息 -->
+    <select id="getWalletDetailByNameAndPwd" resultType="com.smartdatachain.api.web.po.WalletPO"
+            parameterType="java.util.Map">
+        SELECT id,
+        wallet_name,
+        wallet_adress,
+        wallet_credits
+        FROM wallet
+        where wallet_name = #{walletName} and wallet_password = #{walletPassword}
+    </select>
+
+    <!-- 根据钱包私钥获得钱包信息 -->
+    <select id="getWalletByPrivate" resultType="com.smartdatachain.api.integration.bo.WalletBO"
+            parameterType="java.util.Map">
+        SELECT id,
+        wallet_name,
+        wallet_address,
+        wallet_mnemonic,
+        public_key as walletPublicKey,
+        private_key as walletPrivateKey,
+        wallet_credits
+        FROM wallet
+        where private_key = #{privateKey}
+    </select>
+
+    <!-- 根据钱包地址和名字得到钱包助记词 -->
+    <select id="getMnemonicByPwdAndAddress" resultType="com.smartdatachain.api.web.po.WalletPO"
+            parameterType="java.util.Map">
+        SELECT id,
+        wallet_mnemonic
+        FROM wallet
+        where binary  wallet_password = #{walletPassword} and binary  wallet_address = #{walletAddress}
+    </select>
+
+    <!-- 根据钱包地址和密码获得钱包密钥公钥 -->
+    <select id="getWalletKeyByPwdAndAddress" resultType="com.smartdatachain.api.web.po.WalletPO"
+            parameterType="java.util.Map">
+        SELECT id,
+        public_key as walletPublicKey,
+        private_key as walletPrivateKey
+        FROM wallet
+        where wallet_address = #{walletAddress} and wallet_password = #{walletPassword}
+    </select>
+
+    <!-- 根据钱包地址和密码删除钱包 -->
+    <delete id="deleteWalletByAddressAndPwd"
+            parameterType="java.util.Map">
+        DELETE FROM wallet
+        where binary wallet_address = #{walletAddress} and binary wallet_password = #{walletPassword}
+    </delete>
+
+    <!-- 根据地址和密码和密码查询钱包信息 -->
+    <select id="getWalletDetailByAddressAndPwd" resultType="com.smartdatachain.api.web.po.WalletPO"
+            parameterType="java.util.Map">
+        SELECT id,
+        wallet_name,
+        wallet_address,
+        wallet_credits as walletCredit,
+        wallet_mnemonic
+        FROM wallet
+        where wallet_address = #{walletAddress} and wallet_password = #{walletPassword}
+    </select>
+
+    <!-- 根据地址修改钱包积分 -->
+    <update id="updateWalletCreditByAddress"
+            parameterType="java.util.Map">
+        update wallet
+        set
+        wallet_credits = #{walletCredit}
+        where binary wallet_address = #{walletAddress}
+    </update>
+
+    <!-- 根据地址修改钱包密码 -->
+    <update id="updateWalletPasswordByAddress"
+            parameterType="java.util.Map">
+        update wallet
+        set
+        wallet_password = #{walletPassword}
+        where binary wallet_address = #{walletAddress}
+    </update>
+
+    <!-- 根据钱包地址获取钱包交易信息 -->
+    <select id="getWalletDealDetailByAddress" resultType="com.smartdatachain.api.web.po.WalletDealDetailPO"
+            parameterType="java.util.Map">
+        SELECT id,
+        deal_time,
+        wallet_out_address,
+        wallet_into_Address,
+        transfer_token,
+        gas_fee,
+        deal_note as dealNote,
+        trans_type
+        FROM wallet_deal_detail
+        where wallet_out_address = #{walletAddress} and trans_type = #{transType}
+        ORDER BY deal_time DESC
+         limit #{page},#{size}
+    </select>
+
+
+    <!-- 创建钱包 -->
+    <insert id="createWallet" parameterType="com.smartdatachain.api.integration.bo.WalletBO">
+        INSERT INTO wallet (
+            `wallet_name`,
+            `wallet_password`,
+            `wallet_address`,
+            `wallet_mnemonic`,
+            `wallet_credits`,
+            `public_key`,
+            `private_key`
+        )
+        VALUES(
+            #{walletName},
+            #{walletPassword},
+            #{walletAddress},
+            #{walletMnemonic},
+            #{walletCredit},
+            #{walletPublicKey},
+            #{walletPrivateKey}
+        )
+    </insert>
+
+    <!-- 创建钱包交易详情 -->
+    <insert id="createWalletDealDetail" parameterType="com.smartdatachain.api.integration.bo.WalletDealDetailBO">
+        INSERT INTO wallet_deal_detail (
+            `deal_time`,
+            `wallet_out_address`,
+            `wallet_into_address`,
+            `transfer_token`,
+            `gas_fee`,
+            `deal_note`,
+            `trans_type`
+        )
+        VALUES(
+            now(),
+            #{walletOutAddress},
+            #{walletIntoAddress},
+            #{transferToken},
+            #{gasFee},
+            #{dealNote},
+            #{transType}
+        )
+    </insert>
+
+
+</mapper>

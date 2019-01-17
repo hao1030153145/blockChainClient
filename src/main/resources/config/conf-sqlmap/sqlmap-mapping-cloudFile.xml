@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?><!--Converted at: Fri Feb 20 23:34:39 CST 2015-->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="cloudFileMapper">
+
+    <insert id="addCloudFile"
+            parameterType="com.smartdatachain.api.integration.bo.CloudFileBO"
+            useGeneratedKeys="true"
+            keyProperty="id">
+        INSERT INTO cloud_file_info (path, name, cloudId, walletId,file_size,create_time)
+        VALUES (#{path},#{name},#{cloudId},#{walletId},#{fileSize},now())
+    </insert>
+
+    <select id="getCloudFiles"
+            parameterType="java.util.Map"
+            resultType="com.smartdatachain.api.integration.bo.CloudFileBO">
+        SELECT id,path,name,cloudId,walletId,file_size,create_time
+        from cloud_file_info
+        WHERE 1=1
+        <if test="cloudId !=null">
+            AND  cloudId =#{cloudId}
+        </if>
+        <if test="id != null">
+            AND id=#{id}
+        </if>
+        <if test="page != null">
+            limit #{page}
+            <if test="size != null">
+                ,#{size}
+            </if>
+        </if>
+    </select>
+
+    <select id="getCloudFileCount" resultType="int">
+        SELECT count(*)
+        from cloud_file_info where cloudId =#{cloudId}
+    </select>
+
+    <select id="getCloudFilesByIds"
+            resultType="com.smartdatachain.api.integration.bo.CloudFileBO">
+         SELECT id,path,name,cloudId,walletId,file_size,create_time
+        from cloud_file_info
+        WHERE id in
+        <foreach collection="list" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+        ORDER BY create_time DESC
+    </select>
+
+    <select id="getCrawlDataCount"
+            parameterType="java.util.Map"
+            resultType="int">
+        SELECT count(*) from ${tableName} where database_id = #{databaseId}
+    </select>
+
+    <select id="getCrawlDataList"
+            parameterType="java.util.Map"
+            resultType="com.smartdatachain.api.integration.bo.CrawlDataBO">
+        SELECT id,database_id,type,title,content,url,author,img,source,publish_time,create_time,last_modify_time
+        from ${tableName}
+        WHERE
+        1=1
+        <if test="databaseId != null">
+            and database_id =#{databaseId}
+        </if>
+        ORDER BY create_time DESC
+        <if test="page != null">
+            limit #{page}
+            <if test="size != null">
+                ,#{size}
+            </if>
+        </if>
+    </select>
+
+    <insert id="addCrawlDataInCrwlDataBo"
+            parameterType="com.smartdatachain.api.integration.bo.CrawlDataBO"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT  INTO crawl_data (database_id, type, title, content, url, author,logo,read_num,img,source,publish_time, create_time, last_modify_time)
+        VALUES(#{databaseId},#{type},#{title},#{content},#{url},#{author},#{logo},#{readNum},#{img},#{source},#{publishTime},now(),now())
+    </insert>
+
+    <insert id="addDataInCrawlDataNews"
+            parameterType="com.smartdatachain.api.integration.bo.CrawlDataBO"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT  INTO crawl_data_news (database_id, type, title, content, url, author,logo,read_num,img,source,publish_time create_time, last_modify_time)
+        VALUES(#{databaseId},#{type},#{title},#{content},#{url},#{author},#{logo},#{readNum},#{img},#{source},#{publishTime},now(),now())
+    </insert>
+
+</mapper>
